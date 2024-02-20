@@ -1,0 +1,76 @@
+data_dir: data
+model_type: erc # The type of model to train. Can be 'efr' or 'erc
+efr_train_file: MELD_train_efr.json
+# efr_train_file: MaSaC_train_efr.json
+efr_test_file: MELD_test_efr.json
+# efr_test_file: MaSaC_test_efr.json
+efr_val_file: MELD_val_efr.json
+# efr_val_file: MaSaC_val_efr.json
+
+erc_train_file: MaSaC_train_erc.json   # The name of the data file
+
+batch_size: 1 # The batch size
+seq_len: 15  # The maximum sequence length
+
+emotion_map:
+  neutral: 0
+  joy: 1
+  sadness: 2
+  anger: 3
+  fear: 4
+  disgust: 5
+  surprise: 6
+  contempt: 7
+
+efr_embedding_model: l3cube-pune/hing-bert  # The name of the BERT model to use for EFR embedding
+
+efr_model:
+  encoder_dimension: 1536      # The dimension of the encoder (768*2)
+  encoder_nhead: 8             # The number of heads in the multihead attention
+  fc_in: 1536                  # The input dimension of the fully connected layer (768*2)
+  fc_out: 1                    # The output dimension of the fully connected layer
+
+erc_mmn:
+  conversation_GRU_in: 768  # The input dimension of the GRU
+  conversation_GRU_out: 768  # The output dimension of the GRU
+  conversation_GRU_layers: 1  # The number of layers in the GRU
+
+  extra_GRU_in: 768  # The input dimension of the GRU
+  extra_GRU_out: 768  # The output dimension of the GRU
+  extra_GRU_layers: 1  # The number of layers in the GRU
+
+  linear_in: 768  # The input dimension of the linear layer
+  linear_out: 7   # The output dimension of the linear layer
+  linear_dropout: 0.5  # The dropout probability
+
+
+interact: 
+  hidden_dim: 768
+  embedding_dim: 768
+
+memory_network:
+  num_hops: 3  # The number of hops in the memory network
+  hidden_size: 1536  # The hidden size of the memory network
+
+
+pool:
+
+utterance_embedding:
+  model_name: l3cube-pune/hing-bert  # The name of the BERT model to use for utterance embedding
+  hidden_size: 768  # The hidden size of the utterance embedding
+  num_layers: 1  # The number of layers in the utterance embedding
+  bidirectional: True  # Whether the utterance embedding is bidirectional
+  dropout: 0.1  # The dropout probability
+
+dialogue_gru:
+  hidden_size: 384  # The hidden size of the GRU
+  num_layers: 1  # The number of layers in the GRU
+  bidirectional: True  # Whether the GRU is bidirectional
+  dropout: 0.1  # The dropout probability
+
+tensorboard_dir: runs  # The directory where the tensorboard logs are stored
+model_dir: models      # The directory where the trained models are stored
+model_name: EFR_TX     # The name of the model to be saved
+model_ext: pt          # The extension of the model file
+device: cuda           # The device to be used for training and testing
+seed: 42               # The random seed
