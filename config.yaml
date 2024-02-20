@@ -1,5 +1,4 @@
 data_dir: data
-model_type: erc # The type of model to train. Can be 'efr' or 'erc
 efr_train_file: MELD_train_efr.json
 # efr_train_file: MaSaC_train_efr.json
 efr_test_file: MELD_test_efr.json
@@ -11,6 +10,12 @@ erc_train_file: MaSaC_train_erc.json   # The name of the data file
 
 batch_size: 1 # The batch size
 seq_len: 15  # The maximum sequence length
+tensorboard_dir: runs  # The directory where the tensorboard logs are stored
+model_dir: models      # The directory where the trained models are stored
+model_name: ERC_MMN     # The name of the model to be saved
+model_ext: pt          # The extension of the model file
+device: cuda:2           # The device to be used for training and testing
+seed: 42               # The random seed
 
 emotion_map:
   neutral: 0
@@ -31,16 +36,16 @@ efr_model:
   fc_out: 1                    # The output dimension of the fully connected layer
 
 erc_mmn:
-  conversation_GRU_in: 768  # The input dimension of the GRU
-  conversation_GRU_out: 768  # The output dimension of the GRU
+  conversation_GRU_in: 3072  # The input dimension of the GRU
+  conversation_GRU_out: 384  # The output dimension of the GRU
   conversation_GRU_layers: 1  # The number of layers in the GRU
 
   extra_GRU_in: 768  # The input dimension of the GRU
-  extra_GRU_out: 768  # The output dimension of the GRU
+  extra_GRU_out: 384  # The output dimension of the GRU
   extra_GRU_layers: 1  # The number of layers in the GRU
 
-  linear_in: 768  # The input dimension of the linear layer
-  linear_out: 7   # The output dimension of the linear layer
+  linear_in: 1536 # 768  # The input dimension of the linear layer
+  linear_out: 8   # The output dimension of the linear layer
   linear_dropout: 0.5  # The dropout probability
 
 
@@ -51,6 +56,9 @@ interact:
 memory_network:
   num_hops: 3  # The number of hops in the memory network
   hidden_size: 1536  # The hidden size of the memory network
+  query_dim: 1536  # The dimension of the query
+  key_dim: 3072  # The dimension of the key
+  value_dim: 3072  # The dimension of the value
 
 
 pool:
@@ -68,9 +76,4 @@ dialogue_gru:
   bidirectional: True  # Whether the GRU is bidirectional
   dropout: 0.1  # The dropout probability
 
-tensorboard_dir: runs  # The directory where the tensorboard logs are stored
-model_dir: models      # The directory where the trained models are stored
-model_name: EFR_TX     # The name of the model to be saved
-model_ext: pt          # The extension of the model file
-device: cuda           # The device to be used for training and testing
-seed: 42               # The random seed
+

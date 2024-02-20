@@ -79,31 +79,27 @@ def train_erc_mmn(model, train_data, epochs=1, val_data=None):
             utterances = sub_dialog['utterances']
             emotions = sub_dialog['emotions']
             emotions = [CONFIG['emotion_map'][emotion] for emotion in emotions]
+            target_emotions = torch.tensor(emotions, device=CONFIG['device'])
             
-            predicted_emotions = model(utterances, speakers)
             optimizer.zero_grad()
-            for i, (context_utterance, context_emotion, trigger_target) in enumerate(zip(utterances, speakers, emotions)):
-                try:
-                    trigger_pred = model()
-                except ContainsNansError:
-                    save_model_and_exit(model, model_name=CONFIG['model_name']+'_1')
-                loss = criterion(trigger_pred.squeeze(1), torch.tensor([trigger_target], device=CONFIG['device']))
-                loss /= len(trigger_targets)
-                loss.backward()
+            _, predicted_emotions = model(utterances, speakers)
+            loss = criterion(predicted_emotions, target_emotions)
                 
             optimizer.step()
             main_pbar.set_description(f'Training Epoch {epoch} | Dialog {dialog_id} ')
             main_pbar.set_postfix({
-                'Loss': f"{loss.item():.5f}"
+                'Loss': f"{loss.item():.5f}",
+                'utterance length': f"{len(utterances)}",
+                "Memory Allocated": f"{torch.cuda.memory_allocated(CONFIG['device']) / 1e9:.2f}GB"
             })
             tb_logger.add_scalar('Train Loss', loss.item(), epoch*len(train_data) + dialog_id)
 
 if __name__ == '__main__':
-    if CONFIG['model_type'] == 'efr':
+    if CONFIG['model_name'] == 'EFR_TX':
         train_data = load_data(os.path.join(CONFIG['data_dir'], CONFIG['efr_train_file']))
         model = EFR_TX().to(CONFIG['device']) # Create the model
         train_efr_tx(model, train_data, epochs=1)
-    elif CONFIG['model_type'] == 'erc':
+    elif CONFIG['model_name'] == 'ERC_MMN':
         train_data = load_data(os.path.join(CONFIG['data_dir'], CONFIG['erc_train_file']))
         model = ERC_MMN('erc_mmn').to(CONFIG['device'])
         train_erc_mmn(model, train_data, epochs=1)
