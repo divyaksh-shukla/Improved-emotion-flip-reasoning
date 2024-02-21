@@ -71,11 +71,12 @@ class interact(nn.Module):
         
         # previous_global_GRU_output = torch.zeros((batch_size, utterance_len, embedding_dim)).to(device)
         global_output = torch.zeros((utterance_len, self.hidden_size * 2)).to(device)
+        global_output_list = []
         global_hidden = torch.randn(2, 1, self.hidden_size).to(device)
                     
         speaker_output = torch.zeros((utterance_len, embedding_dim * 2)).to(device)
         speaker_initial_hidden = torch.randn(2, 1, self.hidden_size).to(device)
-        fop2 = torch.zeros((utterance_len, embedding_dim * 3)).to(device)
+        # fop2 = torch.zeros((utterance_len, embedding_dim * 3)).to(device)
         initial_attention_output = torch.randn(1, 1, self.hidden_size).to(device) # Initial attention output, in the absence of any previous utterances
         
         # for batch_id in range(batch_size):
@@ -98,29 +99,32 @@ class interact(nn.Module):
             # Taking all the previous utterances (including the current one), only required in the else condition below
             # The keys are comming from the output of the global_GRU
             # key = previous_global_GRU_output[batch_id][:utterance_id+1].clone() 
-            key = global_output[:utterance_id+1, :]
-            key = torch.unsqueeze(key,0)
+            
             
             if utterance_id == 0: # If it is the first utterance in the dialogue
-                tmp = torch.cat([initial_attention_output, current_utterance_embedding], -1).to(device)
+                tmp = torch.cat([initial_attention_output, current_utterance_embedding], -1)#.to(device)
                 speaker_output[utterance_id, :], updated_speaker_hidden_state = self.speaker_GRU(tmp,speaker_hidden)
             else:
+                key = torch.stack(global_output_list[:utterance_id+1], 1).clone()
+                # key = torch.unsqueeze(key,0)
                 query = current_utterance_embedding
                 attention_output,_ = self.attention(key,query) # Attention between current and previous utterances
                 
                 # Concatenating the attention output and the current utterance for input to speaker_GRU
-                tmp = torch.cat([attention_output, current_utterance_embedding], -1).to(device) 
+                tmp = torch.cat([attention_output, current_utterance_embedding], -1)#.to(device) 
                 speaker_output[utterance_id, :], updated_speaker_hidden_state = self.speaker_GRU(tmp,speaker_hidden)
             
             speaker_output[utterance_id, :] = speaker_output[utterance_id, :].add(tmp)        # Residual Connection        
             speaker_hidden_states[current_speaker] = updated_speaker_hidden_state
             
-            fop2[utterance_id, :] = torch.cat([speaker_output[utterance_id, :],dialogue[utterance_id, :]], -1)
-            tmp = torch.unsqueeze(torch.unsqueeze(fop2[utterance_id, :], 0), 0)
-            global_output[utterance_id, :], global_hidden = self.global_GRU(tmp, global_hidden)
+            fop2 = torch.cat([speaker_output[utterance_id, :],dialogue[utterance_id, :]], -1)
+            tmp = torch.unsqueeze(torch.unsqueeze(fop2.clone(), 0), 0)
             
-        # del speaker_hidden_states, speaker_hidden, current_utterance, current_speaker, current_utterance_embedding, key, query, attention_output, tmp, updated_speaker_hidden_state, fop2, initial_attention_output, speaker_initial_hidden
-        return global_output,speaker_output
+            go, global_hidden = self.global_GRU(tmp, global_hidden)
+            global_output_list.append(torch.squeeze(go, 0))
+        global_output = torch.cat(global_output_list, 0)
+        del speaker_hidden_states, speaker_hidden, current_utterance, current_speaker, current_utterance_embedding, key, query, attention_output, tmp, updated_speaker_hidden_state, fop2, initial_attention_output, speaker_initial_hidden
+        return global_output, speaker_output
 
 class MaskedAttention(nn.Module):
     def __init__(self, query_embedding_dim, key_embedding_dim=None, value_embeddim_dim=None, hidden_dim=None, dropout=None):

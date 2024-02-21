@@ -7,6 +7,7 @@ efr_val_file: MELD_val_efr.json
 # efr_val_file: MaSaC_val_efr.json
 
 erc_train_file: MaSaC_train_erc.json   # The name of the data file
+erc_val_file: MaSaC_val_erc.json   # The name of the data file
 
 batch_size: 1 # The batch size
 seq_len: 15  # The maximum sequence length

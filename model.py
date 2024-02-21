@@ -68,17 +68,22 @@ class ERC_MMN(nn.Module):
     def forward(self, utterances, speakers):
         global_output, speaker_output = self.interact_layer(utterances, speakers)
         
-        # memory_output = self.memory_layer(global_output, speaker_output)
-        # memory_output = self.pool(memory_output)
+        memory_output = self.memory_layer(global_output, speaker_output)
+        memory_output = self.pool(memory_output)
         
-        # memory_output = torch.cat([speaker_output, memory_output], dim=1)
+        memory_output = torch.cat([speaker_output, memory_output], dim=1)
         
-        # conversation_GRU_output, _ = self.conversation_GRU(memory_output)
+        conversation_GRU_output, _ = self.conversation_GRU(memory_output)
         
-        # extra_GRU_output, _ = self.extra_GRU(conversation_GRU_output)
-        # extra_GRU_output = extra_GRU_output.add(conversation_GRU_output)
-        
+        extra_GRU_output, _ = self.extra_GRU(conversation_GRU_output)
+        extra_GRU_output = extra_GRU_output.add(conversation_GRU_output)
         output = self.linear(global_output)
         
-        return global_output, output
+        return extra_GRU_output, output
+    
+    def save(self, path):
+        torch.save(self.state_dict(), path)
+    
+    def load(self, path):
+        self.load_state_dict(torch.load(path))
         
